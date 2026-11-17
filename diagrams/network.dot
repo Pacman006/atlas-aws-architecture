@@ -1,0 +1,11 @@
+digraph Network {
+  graph [rankdir=TB, bgcolor="#ffffff", pad="0.4", nodesep=0.48, ranksep=0.60, fontname="DejaVu Sans", label="ATLAS VPC | SUBNET AND TRUST BOUNDARIES", labelloc=t, fontsize=23];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=12, color="#b5c2d3", fillcolor="#f3f8ff", margin="0.2,0.1"];
+  edge [fontsize=10,fontname="DejaVu Sans",color="#6a7890"];
+  cf [label="CloudFront origin-facing IP ranges\nManaged prefix list (regional)", fillcolor="#dfedff"];
+  subgraph cluster_az1 { label="Availability Zone A";style="rounded,filled";fillcolor="#eef6fb"; pub1 [label="Public A | 10.42.0.0/24\nALB + NAT-A"]; app1 [label="Private app A | 10.42.10.0/24\nBeanstalk EC2"]; db1 [label="DB A | 10.42.20.0/24\nNo internet route",fillcolor="#fff4dd"]; pub1 -> app1 [label="TCP 80 ALB-SG only"]; app1 -> db1 [label="TCP 5432 app-SG only"]; }
+  subgraph cluster_az2 { label="Availability Zone B";style="rounded,filled";fillcolor="#f1f7fa"; pub2 [label="Public B | 10.42.1.0/24\nALB + NAT-B (prod)"]; app2 [label="Private app B | 10.42.11.0/24\nBeanstalk EC2"]; db2 [label="DB B | 10.42.21.0/24\nNo internet route",fillcolor="#fff4dd"]; pub2 -> app2 [label="TCP 80 ALB-SG only"]; app2 -> db2 [label="TCP 5432 app-SG only"]; }
+  cf -> pub1 [label="443 prod / 80 demo"];
+  cf -> pub2 [label="443 prod / 80 demo"];
+  app1 -> app2 [style=invis];
+}

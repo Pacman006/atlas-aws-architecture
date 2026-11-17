@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1620px" version="1.1" viewBox="0 0 2200 1620" width="2200px">
+  <defs>
+    <marker id="arrow_blue" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2D6DAD"/>
+    </marker>
+    <marker id="arrow_green" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#197658"/>
+    </marker>
+    <marker id="arrow_amber" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9A650E"/>
+    </marker>
+    <marker id="arrow_purple" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D48A6"/>
+    </marker>
+    <marker id="arrow_teal" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#097D92"/>
+    </marker>
+  </defs>
+  <rect fill="#FFFFFF" height="1620" rx="0" ry="0" stroke="none" stroke-width="2" width="2200" x="0" y="0"/>
+  <rect fill="#162B4A" height="142" rx="0" ry="0" stroke="none" stroke-width="2" width="2200" x="0" y="0"/>
+  <text fill="#FFFFFF" font-family="DejaVu Sans, Arial, sans-serif" font-size="43" font-weight="700" text-anchor="start" x="78" y="67">PROJECT ATLAS  /  NETWORK &amp; SECURITY BLUEPRINT</text>
+  <text fill="#D5E5F8" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" text-anchor="start" x="78" y="112">Two Availability Zones  •  six subnets  •  tier-specific security groups  •  restricted route tables</text>
+  <rect fill="#F6F9FD" height="948" rx="25" ry="25" stroke="#A5B7CC" stroke-width="2" width="2048" x="76" y="392"/>
+  <text fill="#162B4A" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="116" y="1310">VPC 10.42.0.0/16  ·  regional AWS boundary</text>
+  <rect fill="#EAF3FE" height="138" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="595" x="802" y="239"/>
+  <rect fill="#2D6DAD" height="138" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="802" y="239"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="831" y="277">GLOBAL ORIGIN ACCESS</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="831" y="325">CloudFront edge locations</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="831" y="351">ALB ingress restricted to CloudFront IP ranges</text>
+  <rect fill="#F0F6FE" height="830" rx="22" ry="22" stroke="#B8CFE6" stroke-width="2" width="945" x="111" y="430"/>
+  <rect fill="#F0F6FE" height="830" rx="22" ry="22" stroke="#B8CFE6" stroke-width="2" width="945" x="1143" y="430"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="148" y="482">AVAILABILITY ZONE A</text>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="1180" y="482">AVAILABILITY ZONE B</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="970,377 590,412 590,521" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="1230,377 1610,412 1610,521" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="590,719 590,803" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="590,997 590,1083" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="1610,719 1610,803" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="1610,997 1610,1083" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#EAF3FE" height="191" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="844" x="162" y="528"/>
+  <rect fill="#2D6DAD" height="191" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="162" y="528"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="191" y="566">PUBLIC SUBNET A  ·  10.42.0.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="191" y="614">ALB network node  +  NAT gateway A</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="191" y="693">Internet Gateway route · NAT available in demo and production</text>
+  <rect fill="#EAF3FE" height="191" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="844" x="1194" y="528"/>
+  <rect fill="#2D6DAD" height="191" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1194" y="528"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1223" y="566">PUBLIC SUBNET B  ·  10.42.1.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1223" y="614">ALB network node  +  NAT-B (production)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1223" y="693">No NAT-B in single-NAT demonstration configuration</text>
+  <rect fill="#E6F6ED" height="194" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="844" x="162" y="803"/>
+  <rect fill="#197658" height="194" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="162" y="803"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="191" y="841">PRIVATE APP SUBNET A  ·  10.42.10.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="191" y="889">Elastic Beanstalk / EC2  (Auto Scaling)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="191" y="971">ALB SG → EC2 TCP 80 · NAT HTTPS egress</text>
+  <rect fill="#E6F6ED" height="194" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="844" x="1194" y="803"/>
+  <rect fill="#197658" height="194" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1194" y="803"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1223" y="841">PRIVATE APP SUBNET B  ·  10.42.11.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1223" y="889">Elastic Beanstalk / EC2  (Auto Scaling)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1223" y="971">ALB SG → EC2 TCP 80 · NAT HTTPS egress</text>
+  <rect fill="#FFF4DE" height="150" rx="18" ry="18" stroke="#9A650E" stroke-width="2.5" width="844" x="162" y="1083"/>
+  <rect fill="#9A650E" height="150" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="162" y="1083"/>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="191" y="1121">ISOLATED DB SUBNET A  ·  10.42.20.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="191" y="1169">RDS PostgreSQL (non-public)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="191" y="1207">App SG only → TCP 5432 / TLS</text>
+  <rect fill="#FFF4DE" height="150" rx="18" ry="18" stroke="#9A650E" stroke-width="2.5" width="844" x="1194" y="1083"/>
+  <rect fill="#9A650E" height="150" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1194" y="1083"/>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1223" y="1121">ISOLATED DB SUBNET B  ·  10.42.21.0/24</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="1223" y="1169">RDS standby path / Multi-AZ</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1223" y="1207">No internet default route / database subnet group</text>
+  <rect fill="#F7FAFC" height="175" rx="22" ry="22" stroke="#D1DFED" stroke-width="2" width="2044" x="78" y="1380"/>
+  <text fill="#162B4A" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="118" y="1430">TRAFFIC RULES</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="21" font-weight="400" text-anchor="start" x="118" y="1480">CloudFront → ALB: TCP 443 (production) / 80 (demo)  •  ALB → EC2: TCP 80  •  EC2 → RDS: TCP 5432 (TLS)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="21" font-weight="400" text-anchor="start" x="118" y="1521">EC2 → AWS APIs: TCP 443 via NAT  •  S3 image origin is outside VPC and uses CloudFront OAC  •  no public DB endpoint</text>
+</svg>

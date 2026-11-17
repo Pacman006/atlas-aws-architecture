@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1160px" version="1.1" viewBox="0 0 2350 1160" width="2350px">
+  <defs>
+    <marker id="arrow_blue" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2D6DAD"/>
+    </marker>
+    <marker id="arrow_green" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#197658"/>
+    </marker>
+    <marker id="arrow_amber" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9A650E"/>
+    </marker>
+    <marker id="arrow_purple" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D48A6"/>
+    </marker>
+    <marker id="arrow_teal" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#097D92"/>
+    </marker>
+  </defs>
+  <rect fill="#FFFFFF" height="1160" rx="0" ry="0" stroke="none" stroke-width="2" width="2350" x="0" y="0"/>
+  <rect fill="#162B4A" height="142" rx="0" ry="0" stroke="none" stroke-width="2" width="2350" x="0" y="0"/>
+  <text fill="#FFFFFF" font-family="DejaVu Sans, Arial, sans-serif" font-size="43" font-weight="700" text-anchor="start" x="78" y="67">PROJECT ATLAS  /  LOG STREAMING &amp; CSV ANALYTICS</text>
+  <text fill="#D5E5F8" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" text-anchor="start" x="78" y="112">Request events are collected in CloudWatch, streamed to Kinesis, transformed to CSV, and queried from S3</text>
+  <rect fill="#F7FBFD" height="510" rx="26" ry="26" stroke="#C3D7E9" stroke-width="2" width="2220" x="65" y="183"/>
+  <text fill="#162B4A" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="110" y="232">END-TO-END ACTIVITY LOG DELIVERY</text>
+  <rect fill="#E6F6ED" height="222" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="350" x="103" y="309"/>
+  <rect fill="#197658" height="222" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="103" y="309"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="132" y="347">01  APPLICATION</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="132" y="395">Flask JSON logs</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="132" y="505">Request metadata only</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="453,414 543,414" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#EAF3FE" height="222" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="350" x="543" y="309"/>
+  <rect fill="#2D6DAD" height="222" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="543" y="309"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="572" y="347">02  LOG COLLECTION</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="572" y="395">CloudWatch Logs</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="572" y="505">30-day log retention</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="893,414 983,414" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#E1F5F7" height="222" rx="18" ry="18" stroke="#097D92" stroke-width="2.5" width="350" x="983" y="309"/>
+  <rect fill="#097D92" height="222" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="983" y="309"/>
+  <text fill="#097D92" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1012" y="347">03  DATA STREAM</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1012" y="395">Kinesis Streams</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1012" y="505">Near-real-time events</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="1333,414 1423,414" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#F0EBFA" height="222" rx="18" ry="18" stroke="#6D48A6" stroke-width="2.5" width="350" x="1423" y="309"/>
+  <rect fill="#6D48A6" height="222" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1423" y="309"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1452" y="347">04  TRANSFORMATION</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1452" y="395">Firehose + Lambda</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1452" y="505">gzip → normalized CSV</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="1773,414 1863,414" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#FFF4DE" height="222" rx="18" ry="18" stroke="#9A650E" stroke-width="2.5" width="350" x="1863" y="309"/>
+  <rect fill="#9A650E" height="222" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1863" y="309"/>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1892" y="347">05  STORAGE</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1892" y="395">S3 CSV objects</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1892" y="505">activity/ prefix</text>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="2038,531 2038,762 1610,762 1610,798" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="713,531 713,798" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#EAF7F0" height="211" rx="22" ry="22" stroke="#8FC9AC" stroke-width="2" width="940" x="130" y="787"/>
+  <rect fill="#EAF7F0" height="211" rx="22" ry="22" stroke="#8FC9AC" stroke-width="2" width="940" x="1280" y="787"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="172" y="843">OPERATIONS DASHBOARD</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" x="172" y="895">CloudWatch metrics: request count, 5xx, latency</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" x="172" y="941">Designed for operations; does not query CSV directly</text>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="1322" y="843">ANALYTICS / QUERY</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" x="1322" y="895">Athena reads the delivered CSV files in S3</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" x="1322" y="941">Create table using analytics/athena.sql</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="400" text-anchor="start" x="92" y="1073">Data safety: do not include authentication tokens, secrets, passwords, request bodies or unnecessary personal information in request logs.</text>
+</svg>

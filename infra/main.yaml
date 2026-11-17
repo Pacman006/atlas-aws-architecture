@@ -1,0 +1,720 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Project Atlas - two-AZ private-instance Elastic Beanstalk React/Python application,
+  RDS PostgreSQL, CloudFront private S3 images, streaming CSV analytics and GitHub OIDC.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: atlas
+    AllowedPattern: '[a-z][a-z0-9-]{2,20}'
+  Stage:
+    Type: String
+    Default: demo
+    AllowedValues: [demo, production]
+  SolutionStackName:
+    Type: String
+    Description: Copy an ACTIVE Python 3.13 Amazon Linux 2023 SolutionStackName from your chosen Region.
+  RepositoryFullName:
+    Type: String
+    Description: GitHub owner/repository, e.g. my-user/atlas-aws-architecture.
+    AllowedPattern: '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+'
+  GitHubOIDCProviderArn:
+    Type: String
+    Description: Existing account-wide GitHub OIDC provider ARN created by bootstrap-oidc.sh.
+    AllowedPattern: 'arn:aws[a-zA-Z-]*:iam::[0-9]{12}:oidc-provider/token.actions.githubusercontent.com'
+  CloudFrontPrefixListId:
+    Type: String
+    Description: Regional AWS-managed com.amazonaws.global.cloudfront.origin-facing prefix list ID.
+    AllowedPattern: 'pl-[a-z0-9]+'
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.small, t3.medium, t3.large, t4g.small, t4g.medium]
+  DBInstanceClass:
+    Type: String
+    Default: db.t4g.small
+  DBAllocatedStorage:
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 1000
+  DBMultiAZ:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+  DBDeletionProtection:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+  DualNAT:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Use true for zone-independent private-subnet egress in production.
+  OriginDomainName:
+    Type: String
+    Default: ''
+    Description: Optional e.g. origin.example.com; requires a public DNS record pointing to EB ALB.
+  OriginAcmCertificateArn:
+    Type: String
+    Default: ''
+    Description: Regional ACM certificate covering OriginDomainName; required for HTTPS origin.
+  SiteDomainName:
+    Type: String
+    Default: ''
+    Description: Optional e.g. app.example.com (CloudFront alias).
+  CloudFrontAcmCertificateArn:
+    Type: String
+    Default: ''
+    Description: us-east-1 ACM certificate covering SiteDomainName.
+  PublicHostedZoneId:
+    Type: String
+    Default: ''
+    Description: Route53 public hosted zone ID to create origin/site DNS records if domains supplied.
+
+Conditions:
+  UseDualNAT: !Equals [!Ref DualNAT, 'true']
+  UseOriginTLS: !Not [!Equals [!Ref OriginDomainName, '']]
+  UseCustomSiteDomain: !Not [!Equals [!Ref SiteDomainName, '']]
+  UseOriginRecord: !And
+    - !Condition UseOriginTLS
+    - !Not [!Equals [!Ref PublicHostedZoneId, '']]
+  UseSiteRecord: !And
+    - !Condition UseCustomSiteDomain
+    - !Not [!Equals [!Ref PublicHostedZoneId, '']]
+  ProtectDB: !Equals [!Ref DBDeletionProtection, 'true']
+  ProductionStage: !Equals [!Ref Stage, production]
+  EnableMultiAZDB: !Equals [!Ref DBMultiAZ, 'true']
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-${Stage}-vpc'}]
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref VPC, InternetGatewayId: !Ref InternetGateway}
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-public-a'}]
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-public-b'}]
+  AppSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.10.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-app-a'}]
+  AppSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.11.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-app-b'}]
+  DatabaseSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.20.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-db-a'}]
+  DatabaseSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.42.21.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags: [{Key: Name, Value: !Sub '${ProjectName}-db-b'}]
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnetA, RouteTableId: !Ref PublicRouteTable}
+  PublicRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnetB, RouteTableId: !Ref PublicRouteTable}
+  NatElasticIPA:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties: {Domain: vpc}
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties: {SubnetId: !Ref PublicSubnetA, AllocationId: !GetAtt NatElasticIPA.AllocationId}
+  NatElasticIPB:
+    Type: AWS::EC2::EIP
+    Condition: UseDualNAT
+    DependsOn: InternetGatewayAttachment
+    Properties: {Domain: vpc}
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Condition: UseDualNAT
+    Properties: {SubnetId: !Ref PublicSubnetB, AllocationId: !GetAtt NatElasticIPB.AllocationId}
+  AppRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+  AppRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+  AppRouteA:
+    Type: AWS::EC2::Route
+    Properties: {RouteTableId: !Ref AppRouteTableA, DestinationCidrBlock: 0.0.0.0/0, NatGatewayId: !Ref NatGatewayA}
+  AppRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref AppRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !If [UseDualNAT, !Ref NatGatewayB, !Ref NatGatewayA]
+  AppRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref AppSubnetA, RouteTableId: !Ref AppRouteTableA}
+  AppRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref AppSubnetB, RouteTableId: !Ref AppRouteTableB}
+  DBRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+  DBRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref DatabaseSubnetA, RouteTableId: !Ref DBRouteTable}
+  DBRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref DatabaseSubnetB, RouteTableId: !Ref DBRouteTable}
+  PublicALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Only AWS CloudFront origin-facing ingress reaches app ALB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !If [UseOriginTLS, 443, 80]
+          ToPort: !If [UseOriginTLS, 443, 80]
+          SourcePrefixListId: !Ref CloudFrontPrefixListId
+          Description: CloudFront managed origin-facing prefix list
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.42.0.0/16
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Private Elastic Beanstalk instances receive ALB HTTP only
+      VpcId: !Ref VPC
+      # Beanstalk adds the port-80 inbound rule from the ALB ManagedSecurityGroup.
+      # Avoid declaring a second identical ingress rule here.
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL from Beanstalk private app nodes only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref WebSecurityGroup
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Isolated database AZ pair
+      SubnetIds: [!Ref DatabaseSubnetA, !Ref DatabaseSubnetB]
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      StorageType: gp3
+      DBName: atlasdb
+      MasterUsername: atlasadmin
+      ManageMasterUserPassword: true
+      MultiAZ: !If [EnableMultiAZDB, true, false]
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: '03:00-03:30'
+      CopyTagsToSnapshot: true
+      DeletionProtection: !If [ProtectDB, true, false]
+      StorageEncrypted: true
+      AutoMinorVersionUpgrade: true
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups: [!Ref DatabaseSecurityGroup]
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption: {ServerSideEncryptionConfiguration: [{ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}}]}
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      OwnershipControls: {Rules: [{ObjectOwnership: BucketOwnerEnforced}]}
+      LifecycleConfiguration:
+        Rules:
+          - {Id: noncurrent-assets, Status: Enabled, NoncurrentVersionExpiration: {NoncurrentDays: 90}}
+  ImageBucketTransportPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ImageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyNonTLS
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: [!GetAtt ImageBucket.Arn, !Sub '${ImageBucket.Arn}/*']
+            Condition: {Bool: {'aws:SecureTransport': 'false'}}
+          - Sid: CloudFrontOACRead
+            Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${ImageBucket.Arn}/images/*'
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CDNDistribution}'
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption: {ServerSideEncryptionConfiguration: [{ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}}]}
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      LifecycleConfiguration: {Rules: [{Id: old-versions, Status: Enabled, NoncurrentVersionExpiration: {NoncurrentDays: 90}}]}
+  AnalyticsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption: {ServerSideEncryptionConfiguration: [{ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}}]}
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      LifecycleConfiguration: {Rules: [{Id: expire-demo-analytics, Status: Enabled, ExpirationInDays: 90}]}
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub '/${ProjectName}/${Stage}/http-requests'
+      RetentionInDays: 30
+  WebInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSElasticBeanstalkWebTier'
+      Policies:
+        - PolicyName: ReadDatabaseSecretAndWriteAppLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - {Effect: Allow, Action: ['secretsmanager:GetSecretValue'], Resource: !GetAtt Database.MasterUserSecret.SecretArn}
+              - {Effect: Allow, Action: ['logs:CreateLogStream', 'logs:PutLogEvents', 'logs:DescribeLogStreams'], Resource: !GetAtt AppLogGroup.Arn}
+  WebInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: {Roles: [!Ref WebInstanceRole]}
+  EBServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: elasticbeanstalk.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy'
+  EBApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties: {ApplicationName: !Sub '${ProjectName}-${Stage}', Description: React static build and Flask API on Python platform}
+  EBEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn: [AppRouteA, AppRouteB]
+    Properties:
+      ApplicationName: !Ref EBApplication
+      EnvironmentName: !Sub '${ProjectName}-${Stage}-web'
+      SolutionStackName: !Ref SolutionStackName
+      OptionSettings:
+        - {Namespace: 'aws:elasticbeanstalk:environment', OptionName: EnvironmentType, Value: LoadBalanced}
+        - {Namespace: 'aws:elasticbeanstalk:environment', OptionName: LoadBalancerType, Value: application}
+        - {Namespace: 'aws:elasticbeanstalk:environment', OptionName: ServiceRole, Value: !GetAtt EBServiceRole.Arn}
+        - {Namespace: 'aws:elasticbeanstalk:healthreporting:system', OptionName: SystemType, Value: enhanced}
+        - {Namespace: 'aws:elasticbeanstalk:managedactions', OptionName: ManagedActionsEnabled, Value: 'true'}
+        - {Namespace: 'aws:elasticbeanstalk:managedactions', OptionName: PreferredStartTime, Value: 'Sun:04:00'}
+        - {Namespace: 'aws:elasticbeanstalk:managedactions:platformupdate', OptionName: UpdateLevel, Value: minor}
+        - {Namespace: 'aws:elasticbeanstalk:managedactions:platformupdate', OptionName: InstanceRefreshEnabled, Value: 'true'}
+        - {Namespace: 'aws:ec2:vpc', OptionName: VPCId, Value: !Ref VPC}
+        - {Namespace: 'aws:ec2:vpc', OptionName: Subnets, Value: !Join [',', [!Ref AppSubnetA, !Ref AppSubnetB]]}
+        - {Namespace: 'aws:ec2:vpc', OptionName: ELBSubnets, Value: !Join [',', [!Ref PublicSubnetA, !Ref PublicSubnetB]]}
+        - {Namespace: 'aws:ec2:vpc', OptionName: ELBScheme, Value: public}
+        - {Namespace: 'aws:ec2:vpc', OptionName: AssociatePublicIpAddress, Value: 'false'}
+        - {Namespace: 'aws:autoscaling:launchconfiguration', OptionName: InstanceType, Value: !Ref InstanceType}
+        - {Namespace: 'aws:autoscaling:launchconfiguration', OptionName: IamInstanceProfile, Value: !Ref WebInstanceProfile}
+        - {Namespace: 'aws:autoscaling:launchconfiguration', OptionName: SecurityGroups, Value: !Ref WebSecurityGroup}
+        - {Namespace: 'aws:autoscaling:launchconfiguration', OptionName: DisableDefaultEC2SecurityGroup, Value: 'true'}
+        - {Namespace: 'aws:elbv2:loadbalancer', OptionName: SecurityGroups, Value: !Ref PublicALBSecurityGroup}
+        - {Namespace: 'aws:elbv2:loadbalancer', OptionName: ManagedSecurityGroup, Value: !Ref PublicALBSecurityGroup}
+        - {Namespace: 'aws:autoscaling:asg', OptionName: MinSize, Value: '2'}
+        - {Namespace: 'aws:autoscaling:asg', OptionName: MaxSize, Value: '4'}
+        - {Namespace: 'aws:autoscaling:asg', OptionName: Availability Zones, Value: Any 2}
+        - {Namespace: 'aws:autoscaling:trigger', OptionName: MeasureName, Value: CPUUtilization}
+        - {Namespace: 'aws:autoscaling:trigger', OptionName: UpperThreshold, Value: '65'}
+        - {Namespace: 'aws:autoscaling:trigger', OptionName: LowerThreshold, Value: '25'}
+        - {Namespace: 'aws:autoscaling:trigger', OptionName: UpperBreachScaleIncrement, Value: '1'}
+        - {Namespace: 'aws:autoscaling:trigger', OptionName: LowerBreachScaleIncrement, Value: '-1'}
+        - {Namespace: 'aws:elasticbeanstalk:environment:process:default', OptionName: HealthCheckPath, Value: /health}
+        - {Namespace: 'aws:elasticbeanstalk:environment:process:default', OptionName: MatcherHTTPCode, Value: '200'}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: DB_HOST, Value: !GetAtt Database.Endpoint.Address}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: DB_NAME, Value: atlasdb}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: DB_SECRET_ARN, Value: !GetAtt Database.MasterUserSecret.SecretArn}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: DB_CA_BUNDLE, Value: /var/app/current/certs/rds-global-bundle.pem}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: APP_LOG_GROUP, Value: !Ref AppLogGroup}
+        - {Namespace: 'aws:elasticbeanstalk:application:environment', OptionName: AWS_REGION_NAME, Value: !Ref AWS::Region}
+        - !If
+          - UseOriginTLS
+          - {Namespace: 'aws:elbv2:listener:443', OptionName: ListenerEnabled, Value: 'true'}
+          - !Ref AWS::NoValue
+        - !If
+          - UseOriginTLS
+          - {Namespace: 'aws:elbv2:listener:443', OptionName: Protocol, Value: HTTPS}
+          - !Ref AWS::NoValue
+        - !If
+          - UseOriginTLS
+          - {Namespace: 'aws:elbv2:listener:443', OptionName: SSLCertificateArns, Value: !Ref OriginAcmCertificateArn}
+          - !Ref AWS::NoValue
+        - !If
+          - UseOriginTLS
+          - {Namespace: 'aws:elbv2:listener:80', OptionName: ListenerEnabled, Value: 'false'}
+          - !Ref AWS::NoValue
+      Tags: [{Key: ManagedBy, Value: cloudformation}, {Key: Project, Value: !Ref ProjectName}]
+  OriginRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: UseOriginRecord
+    Properties:
+      HostedZoneId: !Ref PublicHostedZoneId
+      Name: !Ref OriginDomainName
+      Type: CNAME
+      TTL: '60'
+      ResourceRecords: [!GetAtt EBEnvironment.EndpointURL]
+  PrivateImageOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${ProjectName}-${Stage}-oac'
+        Description: SigV4 signed private image delivery
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  ForwardAppRequests:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub '${ProjectName}-${Stage}-origin-requests'
+        Comment: Forward API auth headers and query strings without forwarding Host
+        CookiesConfig: {CookieBehavior: all}
+        HeadersConfig: {HeaderBehavior: allExcept, Headers: [host]}
+        QueryStringsConfig: {QueryStringBehavior: all}
+  CDNDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${ProjectName} React app, private S3 images and API'
+        PriceClass: !If [ProductionStage, PriceClass_All, PriceClass_100]
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        Aliases: !If [UseCustomSiteDomain, [!Ref SiteDomainName], !Ref AWS::NoValue]
+        ViewerCertificate: !If
+          - UseCustomSiteDomain
+          - {AcmCertificateArn: !Ref CloudFrontAcmCertificateArn, SslSupportMethod: sni-only, MinimumProtocolVersion: TLSv1.2_2021}
+          - {CloudFrontDefaultCertificate: true}
+        Origins:
+          - Id: beanstalk-app
+            DomainName: !If [UseOriginTLS, !Ref OriginDomainName, !GetAtt EBEnvironment.EndpointURL]
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: !If [UseOriginTLS, https-only, http-only]
+              OriginSSLProtocols: [TLSv1.2]
+          - Id: private-images
+            DomainName: !GetAtt ImageBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt PrivateImageOAC.Id
+            S3OriginConfig: {OriginAccessIdentity: ''}
+        DefaultCacheBehavior:
+          TargetOriginId: beanstalk-app
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachedMethods: [GET, HEAD]
+          CachePolicyId: 413f509a-5e2f-4f77-a896-2af98cdd09d2 # AWS Managed-CachingDisabled
+          OriginRequestPolicyId: !Ref ForwardAppRequests
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: '/images/*'
+            TargetOriginId: private-images
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS]
+            CachedMethods: [GET, HEAD]
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # AWS Managed-CachingOptimized
+            Compress: true
+          - PathPattern: '/assets/*'
+            TargetOriginId: beanstalk-app
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            Compress: true
+  SiteRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: UseSiteRecord
+    Properties:
+      HostedZoneId: !Ref PublicHostedZoneId
+      Name: !Ref SiteDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CDNDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+  GithubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Federated: !Ref GitHubOIDCProviderArn}
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals: {'token.actions.githubusercontent.com:aud': sts.amazonaws.com}
+              StringLike: {'token.actions.githubusercontent.com:sub': !Sub 'repo:${RepositoryFullName}:ref:refs/heads/master'}
+      Policies:
+        - PolicyName: PublishApplicationBundle
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - {Effect: Allow, Action: ['s3:PutObject', 's3:GetObject'], Resource: !Sub '${ArtifactBucket.Arn}/releases/*'}
+              - {Effect: Allow, Action: ['elasticbeanstalk:CreateApplicationVersion', 'elasticbeanstalk:DescribeEnvironments', 'elasticbeanstalk:UpdateEnvironment', 'elasticbeanstalk:DescribeEvents', 'elasticbeanstalk:DescribeApplicationVersions'], Resource: '*'}
+              - {Effect: Allow, Action: ['cloudfront:CreateInvalidation'], Resource: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CDNDistribution}'}
+  ActivityStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      ShardCount: 1
+      RetentionPeriodHours: 24
+      StreamEncryption: {EncryptionType: KMS, KeyId: alias/aws/kinesis}
+  LogsToKinesisRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: !Sub 'logs.${AWS::Region}.amazonaws.com'}
+            Action: sts:AssumeRole
+            Condition: {StringLike: {'aws:SourceArn': !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AppLogGroup}:*'}}
+      Policies:
+        - PolicyName: StreamEvents
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement: [{Effect: Allow, Action: ['kinesis:PutRecord', 'kinesis:PutRecords'], Resource: !GetAtt ActivityStream.Arn}]
+  ActivitySubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn: LogsToKinesisRole
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: '{ $.event_type = "http_request" }'
+      DestinationArn: !GetAtt ActivityStream.Arn
+      RoleArn: !GetAtt LogsToKinesisRole.Arn
+      Distribution: Random
+  CSVTransformerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      ManagedPolicyArns: [!Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
+  CSVTransformer:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.13
+      Handler: index.handler
+      Timeout: 60
+      MemorySize: 256
+      Role: !GetAtt CSVTransformerRole.Arn
+      Code:
+        ZipFile: |
+          import base64
+          import csv
+          import gzip
+          import io
+          import json
+          from datetime import datetime, timezone
+
+          FIELDS = ('event_ts_utc', 'method', 'route', 'status', 'latency_ms', 'request_id', 'event_type')
+
+          def csv_cell(value):
+              value = str(value)
+              # Prevent spreadsheet formula execution if logs are opened in Excel.
+              return "'" + value if value.startswith(('=', '+', '-', '@', '\t', '\r')) else value
+
+          def transform(raw):
+              envelope = json.loads(gzip.decompress(base64.b64decode(raw)))
+              if envelope.get('messageType') != 'DATA_MESSAGE':
+                  return ''
+              output = io.StringIO(newline='')
+              writer = csv.writer(output, lineterminator='\n')
+              for entry in envelope.get('logEvents', []):
+                  try:
+                      item = json.loads(entry['message'])
+                      if item.get('event_type') != 'http_request':
+                          continue
+                      stamp = datetime.fromtimestamp(entry['timestamp'] / 1000, tz=timezone.utc).isoformat()
+                      writer.writerow((stamp, csv_cell(item.get('method', '')), csv_cell(item.get('route', '')),
+                                       item.get('status', ''), item.get('latency_ms', ''),
+                                       csv_cell(item.get('request_id', '')), 'http_request'))
+                  except (ValueError, TypeError, KeyError):
+                      continue
+              return output.getvalue()
+
+          def handler(event, context):
+              rows = []
+              for record in event['records']:
+                  try:
+                      text = transform(record['data'])
+                      rows.append({'recordId': record['recordId'], 'result': 'Ok' if text else 'Dropped',
+                                   'data': base64.b64encode(text.encode('utf-8')).decode('ascii')})
+                  except Exception:
+                      rows.append({'recordId': record['recordId'], 'result': 'ProcessingFailed',
+                                   'data': record['data']})
+              return {'records': rows}
+  FirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: firehose.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      Policies:
+        - PolicyName: ReadStreamTransformWriteCSV
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - {Effect: Allow, Action: ['kinesis:DescribeStream', 'kinesis:GetShardIterator', 'kinesis:GetRecords', 'kinesis:ListShards'], Resource: !GetAtt ActivityStream.Arn}
+              - {Effect: Allow, Action: ['kms:Decrypt', 'kms:GenerateDataKey'], Resource: '*', Condition: {StringEquals: {'kms:ViaService': !Sub 'kinesis.${AWS::Region}.amazonaws.com'}}}
+              - {Effect: Allow, Action: ['lambda:InvokeFunction'], Resource: !GetAtt CSVTransformer.Arn}
+              - {Effect: Allow, Action: ['s3:PutObject', 's3:AbortMultipartUpload', 's3:GetBucketLocation', 's3:ListBucket', 's3:ListBucketMultipartUploads'], Resource: [!GetAtt AnalyticsBucket.Arn, !Sub '${AnalyticsBucket.Arn}/*']}
+  ActivityFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamType: KinesisStreamAsSource
+      KinesisStreamSourceConfiguration:
+        KinesisStreamARN: !GetAtt ActivityStream.Arn
+        RoleARN: !GetAtt FirehoseRole.Arn
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !GetAtt AnalyticsBucket.Arn
+        RoleARN: !GetAtt FirehoseRole.Arn
+        Prefix: activity/
+        ErrorOutputPrefix: errors/!{firehose:error-output-type}/
+        BufferingHints: {SizeInMBs: 5, IntervalInSeconds: 300}
+        CompressionFormat: UNCOMPRESSED
+        FileExtension: .csv
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: Lambda
+              Parameters:
+                - {ParameterName: LambdaArn, ParameterValue: !GetAtt CSVTransformer.Arn}
+                - {ParameterName: NumberOfRetries, ParameterValue: '3'}
+                - {ParameterName: BufferSizeInMBs, ParameterValue: '1'}
+                - {ParameterName: BufferIntervalInSeconds, ParameterValue: '60'}
+  HTTPRequestsMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: '{ $.event_type = "http_request" }'
+      MetricTransformations: [{MetricNamespace: !Sub '${ProjectName}/App', MetricName: Requests, MetricValue: '1'}]
+  HTTPErrorsMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: '{ $.event_type = "http_request" && $.status >= 500 }'
+      MetricTransformations: [{MetricNamespace: !Sub '${ProjectName}/App', MetricName: ServerErrors, MetricValue: '1'}]
+  LatencyMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref AppLogGroup
+      FilterPattern: '{ $.event_type = "http_request" && $.latency_ms = * }'
+      MetricTransformations: [{MetricNamespace: !Sub '${ProjectName}/App', MetricName: LatencyMs, MetricValue: '$.latency_ms', Unit: Milliseconds}]
+  OpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Stage}-operations'
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"text","x":0,"y":0,"width":24,"height":2,"properties":{"markdown":"# Project Atlas | Operations\nApplication request health and traffic"}},
+          {"type":"metric","x":0,"y":2,"width":12,"height":7,"properties":{"title":"Requests and HTTP 5xx","region":"${AWS::Region}","view":"timeSeries","stacked":false,"period":300,"stat":"Sum","metrics":[["${ProjectName}/App","Requests"],["${ProjectName}/App","ServerErrors"]]}},
+          {"type":"metric","x":12,"y":2,"width":12,"height":7,"properties":{"title":"Backend latency (p95)","region":"${AWS::Region}","view":"timeSeries","period":300,"stat":"p95","metrics":[["${ProjectName}/App","LatencyMs"]]}},
+          {"type":"log","x":0,"y":9,"width":24,"height":7,"properties":{"query":"SOURCE '${AppLogGroup}' | fields @timestamp, method, route, status, latency_ms | sort @timestamp desc | limit 30","region":"${AWS::Region}","title":"Recent requests","view":"table"}}
+        ]}
+
+Outputs:
+  WebsiteURL:
+    Description: Public visitor URL (TLS to CloudFront)
+    Value: !Sub 'https://${CDNDistribution.DomainName}'
+  CustomWebsiteURL:
+    Condition: UseCustomSiteDomain
+    Value: !Sub 'https://${SiteDomainName}'
+  ElasticBeanstalkEnvironment:
+    Value: !Ref EBEnvironment
+  ElasticBeanstalkApplication:
+    Value: !Ref EBApplication
+  ImageBucketName:
+    Value: !Ref ImageBucket
+  ImageS3URI:
+    Value: !Sub 's3://${ImageBucket}/images/'
+  ArtifactBucketName:
+    Value: !Ref ArtifactBucket
+  AnalyticsBucketName:
+    Value: !Ref AnalyticsBucket
+  ActivityCSVPrefix:
+    Value: !Sub 's3://${AnalyticsBucket}/activity/'
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  DBSecretArn:
+    Value: !GetAtt Database.MasterUserSecret.SecretArn
+  CDNDistributionId:
+    Value: !Ref CDNDistribution
+  GithubDeployRoleArn:
+    Value: !GetAtt GithubDeployRole.Arn
+  OperationsDashboardName:
+    Value: !Ref OpsDashboard
+  ActivityKinesisStream:
+    Value: !Ref ActivityStream
+  NATMode:
+    Value: !If [UseDualNAT, zone-redundant, single-NAT-demo]
+  OriginTransportMode:
+    Value: !If [UseOriginTLS, HTTPS, HTTP-demo-only]

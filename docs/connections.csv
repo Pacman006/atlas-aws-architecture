@@ -1,0 +1,17 @@
+Source,Destination,Protocol,Port,Identity/Restriction,Encryption,Connectivity,Relevant files
+Browser,CloudFront,HTTPS,443,Public viewer URL,TLS 1.2+ on custom production certificate,Global,infra/main.yaml
+CloudFront,Elastic Beanstalk ALB,HTTPS (prod) / HTTP (demo),443 / 80,AWS-managed origin-facing prefix list,TLS 1.2 for prod origin,Public ALB hostname or origin domain,infra/main.yaml
+Elastic Beanstalk ALB,Private EC2 Nginx,HTTP,80,Inbound on app SG managed by Beanstalk,Private HTTP within VPC,Two application AZs,infra/main.yaml
+Nginx,Flask Gunicorn,HTTP,8000,Instance-local proxy,Loopback/instance HTTP,Same EC2 host,backend/Procfile
+Flask API,RDS PostgreSQL,PostgreSQL,5432,DB SG from app SG + Secrets Manager,SSL verify-full with RDS CA bundle,DB private subnet A/B,backend/application.py
+Private EC2,AWS Secrets Manager,HTTPS,443,Instance role read-only DB secret,TLS,NAT per AZ in production,backend/application.py
+Private EC2,CloudWatch Logs,HTTPS,443,Instance role logs PutLogEvents,TLS,NAT per AZ in production,backend/application.py
+GitHub Actions,AWS STS,HTTPS,443,OIDC master branch trust,TLS,GitHub runner outside VPC,.github/workflows/deploy.yml
+GitHub Actions,S3 release bucket,HTTPS,443,OIDC deployment role,TLS,S3 private and versioned,.github/workflows/deploy.yml
+GitHub Actions,Elastic Beanstalk control plane,HTTPS,443,OIDC deployment role,TLS,Application-version update,.github/workflows/deploy.yml
+CloudFront,S3 image bucket,HTTPS,443,SigV4 OAC and distribution ARN,TLS,Only /images/* object reads,infra/main.yaml
+CloudWatch Logs,Kinesis Data Streams,AWS service delivery,AWS internal,Service role PutRecords,Encrypted stream,Subscription filter,infra/main.yaml
+Kinesis Data Streams,Data Firehose,AWS service delivery,AWS internal,Firehose read role,SSE KMS,Stream source,infra/main.yaml
+Data Firehose,CSV Lambda,AWS service invocation,AWS internal,Firehose invoke role,TLS/AWS service controls,gzip envelope transform,infra/main.yaml
+Data Firehose,S3 analytics bucket,HTTPS,443,Firehose S3 write role,TLS/SSE S3,activity/*.csv,infra/main.yaml
+Athena,S3 analytics bucket,HTTPS,443,Reader's Athena+S3 IAM permissions,TLS,Run externally in configured Athena workgroup,analytics/athena.sql

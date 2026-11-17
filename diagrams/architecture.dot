@@ -1,0 +1,38 @@
+digraph Atlas {
+  graph [rankdir=LR, bgcolor="#f5f8fc", pad=0.40, nodesep=0.56, ranksep=0.66, compound=true, fontname="DejaVu Sans", label="PROJECT ATLAS  |  AWS REFERENCE ARCHITECTURE", labelloc=t, fontsize=25, fontcolor="#15243b"];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=12, margin="0.20,0.12", color="#9db0c6", penwidth=1.25, fillcolor="#ffffff", fontcolor="#14253d"];
+  edge [fontname="DejaVu Sans", fontsize=9, arrowsize=0.7, color="#65768c", fontcolor="#425367"];
+  users [label="Global users\nBrowser / React", fillcolor="#e9f4ff", color="#5b8bc3"];
+  cdn [label="CloudFront CDN\nHTTPS + path policies", fillcolor="#d6eafa", color="#4b82b8"];
+  image [label="S3 image bucket\nPrivate + OAC", fillcolor="#f4e8c7", color="#d0ac58"];
+  git [label="GitHub master\nOIDC deployment", fillcolor="#ece6fa", color="#8e6cc0"];
+  artifacts [label="Versioned S3 bundles", fillcolor="#f4e8c7", color="#d0ac58"];
+  stream [label="Kinesis stream\nCloudWatch → Firehose", fillcolor="#e4f4ea", color="#60a381"];
+  analytics [label="S3 CSV → Athena\nCloudWatch dashboard", fillcolor="#e4f4ea", color="#60a381"];
+  subgraph cluster_vpc {
+    label="AWS VPC  |  10.42.0.0/16"; style="rounded,filled"; fillcolor="#eef3f9"; color="#8baac7"; fontname="DejaVu Sans"; fontsize=17; fontcolor="#284664";
+    subgraph cluster_public {
+      label="PUBLIC SUBNETS  |  AZ-A & AZ-B"; style="rounded,dashed"; color="#afc6e1";
+      alb [label="Application Load Balancer\nCloudFront SG only\nHealth check /health", fillcolor="#e9f3fe", color="#6e99ca"];
+      nat [label="NAT egress\n1 demo / 2 production", fillcolor="#ffffff", color="#90a7c1"];
+    }
+    subgraph cluster_private {
+      label="PRIVATE APPLICATION SUBNETS  |  AZ-A & AZ-B"; style="rounded,dashed"; color="#b2d1c0";
+      asg [label="Elastic Beanstalk ASG\n2 min / 4 max EC2\nFlask + compiled React", fillcolor="#e0f4e8", color="#65a886"];
+    }
+    subgraph cluster_database {
+      label="ISOLATED DATABASE SUBNETS  |  AZ-A & AZ-B"; style="rounded,dashed"; color="#e1cba9";
+      db [label="RDS PostgreSQL\nMulti-AZ / backups\nSecrets Manager", fillcolor="#fff0da", color="#ca9a59"];
+    }
+  }
+  users -> cdn [label="HTTPS 443"];
+  cdn -> alb [label="443 TLS prod / 80 demo"];
+  cdn -> image [label="signed OAC /images/*", color="#c19b47"];
+  alb -> asg [label="HTTP 80 / health"];
+  asg -> db [label="PostgreSQL 5432 TLS", color="#408d6d"];
+  asg -> nat [style=dotted, label="AWS APIs / packages"];
+  git -> artifacts [label="commit trigger"];
+  artifacts -> asg [label="EB release", style=dashed, color="#8963b7"];
+  asg -> stream [label="structured request logs", color="#408d6d"];
+  stream -> analytics [label="batched CSV", color="#408d6d"];
+}

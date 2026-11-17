@@ -1,0 +1,127 @@
+name: Build, test and deploy Atlas
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: atlas-master-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout reviewed commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check Python syntax
+        run: |
+          python -m py_compile backend/application.py
+          python -m unittest discover -s tests -v
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and build React
+        working-directory: frontend
+        run: |
+          if [[ -f package-lock.json ]]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+          npm run build
+      # The repository can be published before an AWS account is provisioned.
+      # Validation and React build still run; deployment activates when all six
+      # repository variables have been configured from the CloudFormation outputs.
+      - name: Check whether AWS deployment is configured
+        id: deployment_gate
+        shell: bash
+        env:
+          ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          REGION: ${{ vars.AWS_REGION }}
+          APPLICATION: ${{ vars.EB_APP }}
+          ENVIRONMENT: ${{ vars.EB_ENV }}
+          RELEASE_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
+          DISTRIBUTION: ${{ vars.CDN_DISTRIBUTION_ID }}
+        run: |
+          if [[ -n "$ROLE_ARN" && -n "$REGION" && -n "$APPLICATION" && -n "$ENVIRONMENT" && -n "$RELEASE_BUCKET" && -n "$DISTRIBUTION" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Six AWS deployment variables are set. Deploying this revision."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "AWS deployment skipped: complete the six repository variables after provisioning CloudFormation."
+          fi
+      - name: Configure short-lived AWS credentials
+        if: steps.deployment_gate.outputs.enabled == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: atlas-github-deploy
+      - name: Assemble immutable Elastic Beanstalk version
+        if: steps.deployment_gate.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle/web
+          cp backend/application.py backend/requirements.txt backend/Procfile bundle/
+          mkdir -p bundle/certs
+          curl --fail --location --retry 3 --silent --show-error \
+            https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
+            --output bundle/certs/rds-global-bundle.pem
+          cp -R frontend/dist bundle/web/
+          cd bundle
+          zip -qr ../atlas-web.zip .
+      - name: Publish and update environment
+        if: steps.deployment_gate.outputs.enabled == 'true'
+        id: release
+        shell: bash
+        env:
+          EB_APP: ${{ vars.EB_APP }}
+          EB_ENV: ${{ vars.EB_ENV }}
+          ARTIFACT_BUCKET: ${{ vars.ARTIFACT_BUCKET }}
+          CDN_DISTRIBUTION_ID: ${{ vars.CDN_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          LABEL="${GITHUB_SHA:0:12}-${GITHUB_RUN_NUMBER}"
+          KEY="releases/${LABEL}.zip"
+          aws s3 cp atlas-web.zip "s3://${ARTIFACT_BUCKET}/${KEY}" --only-show-errors
+          aws elasticbeanstalk create-application-version \
+            --application-name "$EB_APP" --version-label "$LABEL" \
+            --source-bundle "S3Bucket=${ARTIFACT_BUCKET},S3Key=${KEY}" \
+            --description "master commit ${GITHUB_SHA}" --process
+          aws elasticbeanstalk update-environment --environment-name "$EB_ENV" --version-label "$LABEL"
+          for attempt in $(seq 1 80); do
+            STATUS=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
+              --query 'Environments[0].Status' --output text)
+            HEALTH=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
+              --query 'Environments[0].Health' --output text)
+            CURRENT=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
+              --query 'Environments[0].VersionLabel' --output text)
+            echo "Environment: $STATUS / $HEALTH / $CURRENT"
+            if [[ "$STATUS" == 'Ready' && "$CURRENT" == "$LABEL" ]]; then
+              if [[ "$HEALTH" == 'Green' ]]; then
+                aws cloudfront create-invalidation --distribution-id "$CDN_DISTRIBUTION_ID" \
+                  --paths '/' '/index.html'
+                echo "Successful release: $LABEL"
+                exit 0
+              fi
+              echo "Waiting for Green health..."
+            fi
+            sleep 15
+          done
+          echo 'Timed out while waiting for deployment' >&2
+          exit 1

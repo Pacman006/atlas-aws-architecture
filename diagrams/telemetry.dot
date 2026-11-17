@@ -1,0 +1,14 @@
+digraph Telemetry {
+  graph [rankdir=LR, bgcolor="#ffffff", label="ACTIVITY STREAM | END-TO-END LOG PIPELINE", labelloc=t, fontname="DejaVu Sans", fontsize=23, pad=.45, nodesep=.5];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=12, fillcolor="#eef6fc", color="#8facc5", margin=".20,.14"];
+  edge [color="#667f92", fontname="DejaVu Sans", fontsize=10];
+  web [label="Flask requests\nstructured JSON"];
+  cw [label="CloudWatch Logs\n30-day retention"];
+  kin [label="Kinesis Data Streams\n1 shard, encrypted"];
+  fire [label="Amazon Data Firehose\nLambda gzip → CSV transform"];
+  s3 [label="S3 activity/*.csv\n5 MB / 300 s buffer", fillcolor="#fdf0d5",color="#d4b66f"];
+  ath [label="Athena SQL\nCSV queries",fillcolor="#e8f5e9",color="#7daa82"];
+  dash [label="CloudWatch dashboard\nrequests / 5xx / p95",fillcolor="#e8f5e9",color="#7daa82"];
+  web -> cw -> kin -> fire -> s3 -> ath;
+  cw -> dash [label="metric filters"];
+}

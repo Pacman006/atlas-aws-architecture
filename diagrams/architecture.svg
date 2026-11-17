@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" height="1650px" version="1.1" viewBox="0 0 2400 1650" width="2400px">
+  <defs>
+    <marker id="arrow_blue" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2D6DAD"/>
+    </marker>
+    <marker id="arrow_green" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#197658"/>
+    </marker>
+    <marker id="arrow_amber" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9A650E"/>
+    </marker>
+    <marker id="arrow_purple" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D48A6"/>
+    </marker>
+    <marker id="arrow_teal" markerHeight="10" markerUnits="strokeWidth" markerWidth="10" orient="auto" refX="9" refY="5">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#097D92"/>
+    </marker>
+  </defs>
+  <rect fill="#FFFFFF" height="1650" rx="0" ry="0" stroke="none" stroke-width="2" width="2400" x="0" y="0"/>
+  <rect fill="#162B4A" height="142" rx="0" ry="0" stroke="none" stroke-width="2" width="2400" x="0" y="0"/>
+  <text fill="#FFFFFF" font-family="DejaVu Sans, Arial, sans-serif" font-size="43" font-weight="700" text-anchor="start" x="78" y="67">PROJECT ATLAS  /  AWS SYSTEM ARCHITECTURE</text>
+  <text fill="#D5E5F8" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="400" text-anchor="start" x="78" y="112">React + Flask API  •  Elastic Beanstalk  •  private RDS  •  CloudFront  •  GitHub delivery</text>
+  <rect fill="#F6F9FD" height="560" rx="24" ry="24" stroke="#A5B7CC" stroke-width="2" width="1450" x="875" y="188"/>
+  <text fill="#162B4A" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="920" y="232">AWS VPC    10.42.0.0/16</text>
+  <rect fill="#EAF3FE" height="375" rx="18" ry="18" stroke="#A5B7CC" stroke-width="1.5" width="430" x="895" y="264"/>
+  <rect fill="#E6F6ED" height="375" rx="18" ry="18" stroke="#A5B7CC" stroke-width="1.5" width="485" x="1345" y="264"/>
+  <rect fill="#FFF4DE" height="375" rx="18" ry="18" stroke="#A5B7CC" stroke-width="1.5" width="455" x="1850" y="264"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="920" y="302">PUBLIC  /  AZ-A + AZ-B</text>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="1372" y="302">PRIVATE APP  /  AZ-A + AZ-B</text>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="1876" y="302">PRIVATE DB  /  AZ-A + AZ-B</text>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="360,420 430,420" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="812,420 928,420" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_blue)" points="1275,420 1375,420" stroke="#2D6DAD" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="1802,420 1878,420" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_amber)" points="615,494 615,568" stroke="#9A650E" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect fill="#EAF3FE" height="148" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="305" x="55" y="346"/>
+  <rect fill="#2D6DAD" height="148" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="55" y="346"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="84" y="384">INTERNET CLIENT</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="84" y="432">Browser / users</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="84" y="468">Public HTTPS viewer</text>
+  <rect fill="#EAF3FE" height="148" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="382" x="430" y="346"/>
+  <rect fill="#2D6DAD" height="148" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="430" y="346"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="459" y="384">GLOBAL CDN</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="459" y="432">Amazon CloudFront</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="459" y="468">TLS 443 · edge cache policies</text>
+  <rect fill="#EAF3FE" height="148" rx="18" ry="18" stroke="#2D6DAD" stroke-width="2.5" width="347" x="928" y="346"/>
+  <rect fill="#2D6DAD" height="148" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="928" y="346"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="957" y="384">TRAFFIC ENTRY</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="957" y="432">Load Balancer (ALB)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="957" y="468">Health: GET /health</text>
+  <rect fill="#E6F6ED" height="148" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="427" x="1375" y="346"/>
+  <rect fill="#197658" height="148" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1375" y="346"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1404" y="384">PRIVATE COMPUTE</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1404" y="432">Elastic Beanstalk EC2</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1404" y="468">Auto Scaling: min 2 · max 4</text>
+  <rect fill="#FFF4DE" height="148" rx="18" ry="18" stroke="#9A650E" stroke-width="2.5" width="400" x="1878" y="346"/>
+  <rect fill="#9A650E" height="148" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1878" y="346"/>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1907" y="384">PRIVATE DATA</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1907" y="432">RDS PostgreSQL</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1907" y="468">TCP 5432 · TLS · backups</text>
+  <rect fill="#E5EFFB" height="43" rx="20" ry="20" stroke="none" stroke-width="2" width="132" x="358" y="303"/>
+  <text fill="#274D73" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" x="424.0" y="332">HTTPS 443</text>
+  <rect fill="#E5EFFB" height="43" rx="20" ry="20" stroke="none" stroke-width="2" width="152" x="788" y="303"/>
+  <text fill="#274D73" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" x="864.0" y="332">443 / 80</text>
+  <rect fill="#E5EFFB" height="43" rx="20" ry="20" stroke="none" stroke-width="2" width="133" x="1271" y="303"/>
+  <text fill="#274D73" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" x="1337.5" y="332">HTTP 80</text>
+  <rect fill="#E7F5E9" height="43" rx="20" ry="20" stroke="none" stroke-width="2" width="148" x="1770" y="303"/>
+  <text fill="#187653" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" x="1844.0" y="332">TLS 5432</text>
+  <rect fill="#FFF4DE" height="158" rx="18" ry="18" stroke="#9A650E" stroke-width="2.5" width="385" x="426" y="568"/>
+  <rect fill="#9A650E" height="158" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="426" y="568"/>
+  <text fill="#9A650E" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="455" y="606">IMAGE ORIGIN</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="455" y="654">Private S3 images</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="455" y="700">CloudFront OAC /images/*</text>
+  <rect fill="#E9F1FA" height="43" rx="20" ry="20" stroke="none" stroke-width="2" width="292" x="65" y="553"/>
+  <text fill="#2D6DAD" font-family="DejaVu Sans, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" x="211.0" y="582">No direct EC2 / DB access</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="919" y="571">ALB SG: CloudFront-only origin ranges</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1370" y="571">EC2 SG: allow ALB only</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1870" y="571">RDS: non-public DB subnets</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1370" y="610">NAT egress → AWS APIs (HTTPS 443)</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1870" y="610">Secrets Manager credentials</text>
+  <rect fill="#F8F5FE" height="345" rx="24" ry="24" stroke="#D7C9EF" stroke-width="2" width="2270" x="57" y="800"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="90" y="847">CONTINUOUS DELIVERY   /   master branch → deploy</text>
+  <polyline fill="none" marker-end="url(#arrow_purple)" points="520,968 632,968" stroke="#6D48A6" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_purple)" points="1055,968 1168,968" stroke="#6D48A6" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <polyline fill="none" marker-end="url(#arrow_purple)" points="1602,968 1710,968" stroke="#6D48A6" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect fill="#F0EBFA" height="159" rx="18" ry="18" stroke="#6D48A6" stroke-width="2.5" width="427" x="93" y="893"/>
+  <rect fill="#6D48A6" height="159" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="93" y="893"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="122" y="931">SOURCE CONTROL</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="122" y="979">GitHub / master</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="122" y="1026">Push initiates workflow</text>
+  <rect fill="#F0EBFA" height="159" rx="18" ry="18" stroke="#6D48A6" stroke-width="2.5" width="423" x="632" y="893"/>
+  <rect fill="#6D48A6" height="159" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="632" y="893"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="661" y="931">IDENTITY</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="661" y="979">GitHub OIDC → STS</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="661" y="1026">No saved AWS access keys</text>
+  <rect fill="#F0EBFA" height="159" rx="18" ry="18" stroke="#6D48A6" stroke-width="2.5" width="434" x="1168" y="893"/>
+  <rect fill="#6D48A6" height="159" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1168" y="893"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1197" y="931">RELEASE ARTIFACT</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1197" y="979">Versioned S3 ZIP</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1197" y="1026">Build React / package Flask</text>
+  <rect fill="#F0EBFA" height="159" rx="18" ry="18" stroke="#6D48A6" stroke-width="2.5" width="573" x="1710" y="893"/>
+  <rect fill="#6D48A6" height="159" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1710" y="893"/>
+  <text fill="#6D48A6" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1739" y="931">APPLICATION UPDATE</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="26" font-weight="700" text-anchor="start" x="1739" y="979">Elastic Beanstalk release</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="400" text-anchor="start" x="1739" y="1026">Update version + CDN invalidation</text>
+  <rect fill="#F1FAF7" height="366" rx="24" ry="24" stroke="#C5E8DA" stroke-width="2" width="2270" x="57" y="1195"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="23" font-weight="700" text-anchor="start" x="90" y="1242">ACTIVITY LOGGING   /   streaming → CSV → reporting</text>
+  <rect fill="#E6F6ED" height="155" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="350" x="92" y="1300"/>
+  <rect fill="#197658" height="155" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="92" y="1300"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="121" y="1338">FLASK REQUEST LOGS</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="121" y="1386">JSON events</text>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="442,1375 493,1375" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect fill="#E6F6ED" height="155" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="354" x="493" y="1300"/>
+  <rect fill="#197658" height="155" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="493" y="1300"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="522" y="1338">CLOUDWATCH LOGS</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="522" y="1386">30-day retention</text>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="847,1375 890,1375" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect fill="#E6F6ED" height="155" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="354" x="890" y="1300"/>
+  <rect fill="#197658" height="155" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="890" y="1300"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="919" y="1338">KINESIS STREAM</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="919" y="1386">Streaming input</text>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="1244,1375 1288,1375" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect fill="#E6F6ED" height="155" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="380" x="1288" y="1300"/>
+  <rect fill="#197658" height="155" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1288" y="1300"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1317" y="1338">FIREHOSE + LAMBDA</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="1317" y="1386">CSV transformation</text>
+  <polyline fill="none" marker-end="url(#arrow_green)" points="1668,1375 1714,1375" stroke="#197658" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect fill="#E6F6ED" height="155" rx="18" ry="18" stroke="#197658" stroke-width="2.5" width="569" x="1714" y="1300"/>
+  <rect fill="#197658" height="155" rx="6" ry="6" stroke="none" stroke-width="2" width="12" x="1714" y="1300"/>
+  <text fill="#197658" font-family="DejaVu Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="1" text-anchor="start" x="1743" y="1338">S3 CSV → ATHENA</text>
+  <text fill="#17263D" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="start" x="1743" y="1386">CloudWatch dashboard</text>
+  <text fill="#526781" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" font-weight="400" text-anchor="start" x="78" y="1617">Security boundary: browser → CloudFront; origin access filtered; application and database remain privately addressed.</text>
+</svg>
